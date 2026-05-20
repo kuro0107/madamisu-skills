@@ -1,0 +1,5 @@
+output/
+publish/
+input/
+*.tmp
+_working/
