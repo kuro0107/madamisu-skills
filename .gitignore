@@ -1,5 +1,5 @@
-output/
-publish/
-input/
+/output/
+/publish/
+/input/
 *.tmp
 _working/

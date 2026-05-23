@@ -9,15 +9,19 @@
 > デフォルトのループ数で全フェーズを通すと、Claude Pro プランの週制限の 20〜50% 程度を消費する可能性がある（2026年5月現在）。  
 > トークンを節約したい場合は `--loops 1` オプションを使用すること。
 
+このスキルは個人制作であり、スキル作成にも Claude Code を利用している。\
+一応ものとして形にはなるが、検証回数が圧倒的に足りないため、品質は保証できない。
+
 ---
 
 ## インストール
 
-```bash
-git clone https://github.com/kuro0107/madamisu-skills.git
+```
+/plugin marketplace add kuro0107/madamisu-skills
+/plugin install madamisu
 ```
 
-クローンしたディレクトリで Claude Code を起動するだけで `/madamisu` と `/madamisu-publish` が使えるようになる。自分のプロジェクトに組み込む場合は `.claude/` フォルダをプロジェクトルートにコピーする。
+導入後、任意のディレクトリから `/madamisu:scenario` と `/madamisu:publish` が使える。
 
 詳細なリファレンス（全skill引数・出力構造・rubric一覧）は [docs/reference.md](docs/reference.md) を参照。
 
@@ -28,7 +32,7 @@ git clone https://github.com/kuro0107/madamisu-skills.git
 ### 設定を生成する
 
 ```
-/madamisu <元資料のパス>
+/madamisu:scenario <元資料のパス>
 ```
 
 元資料（フォルダまたは `.md` ファイル）を渡すと、ヒアリングを経て世界観・キャラクター・タイムスケジュールを自動生成する。  
@@ -39,7 +43,7 @@ git clone https://github.com/kuro0107/madamisu-skills.git
 設定生成が終わったら（または既存の設定資料があれば）:
 
 ```
-/madamisu-publish
+/madamisu:publish
 ```
 
 引数省略時は直前の `/madamisu` 出力を自動検出。GM資料・ハンドアウト・証拠資料・ルール・エンディングをまとめて作成する。
@@ -49,7 +53,6 @@ git clone https://github.com/kuro0107/madamisu-skills.git
 ## 今後の展望
 
 - スキルの微調整・品質改善
-- Claude Code プラグイン化
 - デザインを含めた成果物ファイル（PDF・画像）の自動生成
 
 ---
@@ -59,15 +62,15 @@ git clone https://github.com/kuro0107/madamisu-skills.git
 ### 全フェーズを一括実行
 
 ```
-/madamisu <元資料のパス> [--loops N] [--p1-loops N] [--p2-loops N] [--p3-loops N]
+/madamisu:scenario <元資料のパス> [--loops N] [--p1-loops N] [--p2-loops N] [--p3-loops N]
 ```
 
 **例:**
 ```
-/madamisu 設定資料/
-/madamisu 元ネタ.md
-/madamisu 設定資料/ --loops 1
-/madamisu 設定資料/ --loops 1 --p2-loops 2
+/madamisu:scenario 設定資料/
+/madamisu:scenario 元ネタ.md
+/madamisu:scenario 設定資料/ --loops 1
+/madamisu:scenario 設定資料/ --loops 1 --p2-loops 2
 ```
 
 フォルダを指定するとフォルダ内の全Markdownファイルを読み込む。ファイルを指定するとそのファイルのみ読み込む。
@@ -109,9 +112,9 @@ Phase 3: タイムスケジュール構築 → ユーザー確認 [y/n/f] → �
 特定フェーズだけ実行したい場合:
 
 ```
-/madamisu-phase1 <元資料のパス> [--base <ベースバージョン>] [--loops N]
-/madamisu-phase2 <元資料のパス> [--base <ベースバージョン>] [--loops N]
-/madamisu-phase3 <元資料のパス> [--base <ベースバージョン>] [--loops N]
+/madamisu:phase1 <元資料のパス> [--base <ベースバージョン>] [--loops N]
+/madamisu:phase2 <元資料のパス> [--base <ベースバージョン>] [--loops N]
+/madamisu:phase3 <元資料のパス> [--base <ベースバージョン>] [--loops N]
 ```
 
 **`--base` オプション:**
@@ -124,7 +127,7 @@ Phase 3: タイムスケジュール構築 → ユーザー確認 [y/n/f] → �
 **例: Phase 2だけ再実行してブラッシュアップ**
 
 ```
-/madamisu-phase2 設定資料/ --base output/v5
+/madamisu:phase2 設定資料/ --base output/v5
 ```
 
 ---
@@ -187,7 +190,7 @@ output/
 | 資料まとめ | 全意見を統合してMDファイルに出力 |
 | 校正 | 誤字・表記揺れ・句読点を修正 |
 
-評価チェックリスト（ルーブリック）は `.claude/rubrics/` に外出ししており、プロジェクト固有の評価軸を追加したい場合は該当ファイルを編集可能。
+評価チェックリスト（ルーブリック）は `plugins/madamisu/rubrics/` に外出ししており、プロジェクト固有の評価軸を追加したい場合は該当ファイルを編集可能。
 
 - `phase{N}-game.md`: ゲーム性レビュー観点
 - `phase{N}-world.md`: 世界観レビュー観点
@@ -211,7 +214,7 @@ Phase X 完了 → [y/n/f] → f → フィードバック内容入力 → 適�
 **経路B: 独立コマンド**
 
 ```
-/madamisu-feedback [--v N] [--light|--full] "<フィードバック内容>"
+/madamisu:feedback [--v N] [--light|--full] "<フィードバック内容>"
 ```
 
 | 引数 | 効果 |
@@ -235,7 +238,7 @@ Phase X 完了 → [y/n/f] → f → フィードバック内容入力 → 適�
 
 フィードバックが対象v以前のフェーズ要素を含む場合（例: Phase 3完了v にキャラ背景変更指摘）、警告と選択肢が表示される:
 
-1. フルやり直し推奨（`/madamisu-phaseX` で再開）
+1. フルやり直し推奨（`/madamisu:phaseX` で再開）
 2. このvで全関連ファイル修正（重量フロー強制、整合性破綻リスクあり）
 
 ### 履歴記録
@@ -252,7 +255,7 @@ madamisu の設定資料生成後、実プレイに必要な全資料（GM資料
 ### 起動方法
 
 ```
-/madamisu-publish [<入力ディレクトリ>]
+/madamisu:publish [<入力ディレクトリ>]
 ```
 
 - 引数省略時: `output/v*/` の最新vを自動検出（madamisu出力）
@@ -263,14 +266,14 @@ madamisu の設定資料生成後、実プレイに必要な全資料（GM資料
 
 | 工程 | 内容 | スキル |
 |---|---|---|
-| 0 | 前提資料の存在確認 | `/madamisu-publish-step0` |
-| 1 | 要望ヒアリング（難易度・時間・書き口） | `/madamisu-publish-step1` |
-| 2 | ルール設計（フェーズ構成・情報開示マトリクス） | `/madamisu-publish-step2` |
-| 3 | 設計案ユーザー確認 `[y/n/f]` | `/madamisu-publish-step3` |
-| 4 | 資料作成（GM資料・ハンドアウト・証拠・イントロ等） | `/madamisu-publish-step4` |
-| 5 | 四段階レビュー（プレイアビリティ・整合性/網羅性・ストレステスト・校正） | `/madamisu-publish-step5` |
-| 6 | 修正反映（軽微/資料は自動、設計はユーザー確認） | `/madamisu-publish-step6` |
-| 7 | 最終確認・納品 | `/madamisu-publish-step7` |
+| 0 | 前提資料の存在確認 | `/madamisu:publish-step0` |
+| 1 | 要望ヒアリング（難易度・時間・書き口） | `/madamisu:publish-step1` |
+| 2 | ルール設計（フェーズ構成・情報開示マトリクス） | `/madamisu:publish-step2` |
+| 3 | 設計案ユーザー確認 `[y/n/f]` | `/madamisu:publish-step3` |
+| 4 | 資料作成（GM資料・ハンドアウト・証拠・イントロ等） | `/madamisu:publish-step4` |
+| 5 | 四段階レビュー（プレイアビリティ・整合性/網羅性・ストレステスト・校正） | `/madamisu:publish-step5` |
+| 6 | 修正反映（軽微/資料は自動、設計はユーザー確認） | `/madamisu:publish-step6` |
+| 7 | 最終確認・納品 | `/madamisu:publish-step7` |
 
 ### 出力
 
@@ -299,7 +302,7 @@ publish/
 
 ### 難易度連動
 
-`.claude/rubrics/publish-difficulty.md` で難易度別の指針を定義（フェーズ数・手がかり数・ミスリード密度・時間配分等）。初心者向けは手がかり冗長、上級者向けはミスリード強化。
+`plugins/madamisu/rubrics/publish-difficulty.md` で難易度別の指針を定義（フェーズ数・手がかり数・ミスリード密度・時間配分等）。初心者向けは手がかり冗長、上級者向けはミスリード強化。
 
 ---
 
@@ -309,7 +312,7 @@ publish/
 最終 v の `_working/` も含めて完全削除するには:
 
 ```
-/madamisu-clean
+/madamisu:clean
 ```
 
 確認プロンプトで `y` を入力すると `output/v*/` 配下のすべての `_working/` を削除する。最終納品物（ゲーム設定.md・世界観.md・キャラクター.md・タイムスケジュール.md）は残る。

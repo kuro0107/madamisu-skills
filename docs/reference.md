@@ -6,16 +6,17 @@
 2. [出力ファイル構造](#出力ファイル構造)
 3. [output/_config.md の構造](#output_configmd-の構造)
 4. [rubric一覧](#rubric一覧)
-5. [よくある使い方パターン](#よくある使い方パターン)
+5. [agents 一覧](#agents-一覧)
+6. [よくある使い方パターン](#よくある使い方パターン)
 
 ---
 
 ## skill一覧
 
-### `/madamisu` — メインスキル（全フェーズ一括）
+### `/madamisu:scenario` — メインスキル（全フェーズ一括）
 
 ```
-/madamisu <元資料のパス> [--loops N] [--p1-loops N] [--p2-loops N] [--p3-loops N]
+/madamisu:scenario <元資料のパス> [--loops N] [--p1-loops N] [--p2-loops N] [--p3-loops N]
 ```
 
 | 引数 | 必須 | 説明 |
@@ -30,10 +31,10 @@
 
 ---
 
-### `/madamisu-phase1` — Phase 1（骨子確立）
+### `/madamisu:phase1` — Phase 1（骨子確立）
 
 ```
-/madamisu-phase1 <元資料のパス> [--base <バージョン>] [--loops N]
+/madamisu:phase1 <元資料のパス> [--base <バージョン>] [--loops N]
 ```
 
 | 引数 | 必須 | 説明 |
@@ -46,10 +47,10 @@
 
 ---
 
-### `/madamisu-phase2` — Phase 2（プロット精錬）
+### `/madamisu:phase2` — Phase 2（プロット精錬）
 
 ```
-/madamisu-phase2 <元資料のパス> [--base <バージョン>] [--loops N]
+/madamisu:phase2 <元資料のパス> [--base <バージョン>] [--loops N]
 ```
 
 引数仕様は Phase 1 と同一。
@@ -58,10 +59,10 @@
 
 ---
 
-### `/madamisu-phase3` — Phase 3（タイムスケジュール構築）
+### `/madamisu:phase3` — Phase 3（タイムスケジュール構築）
 
 ```
-/madamisu-phase3 <元資料のパス> [--base <バージョン>] [--loops N]
+/madamisu:phase3 <元資料のパス> [--base <バージョン>] [--loops N]
 ```
 
 引数仕様は Phase 1 と同一。
@@ -70,10 +71,10 @@
 
 ---
 
-### `/madamisu-feedback` — フィードバック反映
+### `/madamisu:feedback` — フィードバック反映
 
 ```
-/madamisu-feedback [--v N] [--light|--full] "<フィードバック内容>"
+/madamisu:feedback [--v N] [--light|--full] "<フィードバック内容>"
 ```
 
 | 引数 | 必須 | 説明 |
@@ -89,20 +90,20 @@
 
 ---
 
-### `/madamisu-clean` — 中間ファイル削除
+### `/madamisu:clean` — 中間ファイル削除
 
 ```
-/madamisu-clean
+/madamisu:clean
 ```
 
 `output/v*/` 配下のすべての `_working/` を削除する。確認プロンプトで `y` を入力すると実行。最終納品物（.md）は残る。
 
 ---
 
-### `/madamisu-publish` — プレイ用資料作成（全工程一括）
+### `/madamisu:publish` — プレイ用資料作成（全工程一括）
 
 ```
-/madamisu-publish [<入力ディレクトリ>]
+/madamisu:publish [<入力ディレクトリ>]
 ```
 
 | 引数 | 必須 | 説明 |
@@ -113,7 +114,7 @@
 
 ---
 
-### `/madamisu-publish-step0` 〜 `/madamisu-publish-step7` — 工程別スキル
+### `/madamisu:publish-step0` 〜 `/madamisu:publish-step7` — 工程別スキル
 
 | スキル | 工程 | 内容 |
 |---|---|---|
@@ -129,14 +130,14 @@
 各スキルの `$ARGUMENTS`:
 
 ```
-/madamisu-publish-step0 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step1 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step2 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step3 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step4 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step5 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step6 <入力ディレクトリ> --v <publishバージョン>
-/madamisu-publish-step7 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step0 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step1 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step2 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step3 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step4 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step5 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step6 <入力ディレクトリ> --v <publishバージョン>
+/madamisu:publish-step7 <入力ディレクトリ> --v <publishバージョン>
 ```
 
 ---
@@ -237,7 +238,7 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 
 ## rubric一覧
 
-`.claude/rubrics/` 配下のファイルがエージェントの評価基準として使われる。ファイルを編集することでプロジェクト固有の評価軸を追加・調整できる。
+`plugins/madamisu/rubrics/` 配下のファイルがエージェントの評価基準として使われる。ファイルを編集することでプロジェクト固有の評価軸を追加・調整できる。
 
 ### 設定生成フェーズ用
 
@@ -274,12 +275,29 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 
 ---
 
+## agents 一覧
+
+`plugins/madamisu/agents/` 配下のエージェント定義ファイル。各スキルから必要に応じて呼び出される。
+
+| ファイル | 役割 |
+|---|---|
+| `game-idea.md` | ゲーム性アイデア出し |
+| `world-idea.md` | 世界観アイデア出し |
+| `game-review.md` | ゲーム性レビュー（rubric `RUBRIC_PATH` で動的指定） |
+| `world-review.md` | 世界観レビュー（rubric `RUBRIC_PATH` で動的指定） |
+| `config-review.md` | 制作方針レビュー（rubric `RUBRIC_PATH` で動的指定） |
+| `consistency.md` | 整合性チェック（rubric `RUBRIC_PATH` で動的指定） |
+| `synthesis.md` | 資料まとめ |
+| `proofread.md` | 校正 |
+
+---
+
 ## よくある使い方パターン
 
 ### トークンを節約したい
 
 ```
-/madamisu 設定資料/ --loops 1
+/madamisu:scenario 設定資料/ --loops 1
 ```
 
 各フェーズ最大1ループで完了。品質は下がるがトークンを大幅節約。
@@ -287,7 +305,7 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 ### Phase 2だけ再実行してブラッシュアップ
 
 ```
-/madamisu-phase2 設定資料/ --base output/v5
+/madamisu:phase2 設定資料/ --base output/v5
 ```
 
 `output/v5` を引き継いで Phase 2 のみ再実行。
@@ -295,7 +313,7 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 ### フィードバックを軽く反映（文言修正等）
 
 ```
-/madamisu-feedback --light "PC2の職業を医師から弁護士に変更"
+/madamisu:feedback --light "PC2の職業を医師から弁護士に変更"
 ```
 
 軽量フロー強制。同一バージョンを上書き更新。
@@ -303,7 +321,7 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 ### フィードバックで大幅変更
 
 ```
-/madamisu-feedback --full "犯人の動機を復讐から金銭目的に変えて全体を見直したい"
+/madamisu:feedback --full "犯人の動機を復讐から金銭目的に変えて全体を見直したい"
 ```
 
 重量フロー強制。新バージョンを生成。
@@ -311,7 +329,7 @@ Phase 0.5 のヒアリング結果が保存される。全フェーズ共通の�
 ### Phase 1完了後に止めてプレイ資料を作る
 
 ```
-/madamisu 設定資料/ --p1-loops 2 --p2-loops 0 --p3-loops 0
+/madamisu:scenario 設定資料/ --p1-loops 2 --p2-loops 0 --p3-loops 0
 ```
 
 Phase 1のみ2ループで実行。Phase 2・3はスキップ（`--loops 0` で即停止）。
@@ -319,7 +337,7 @@ Phase 1のみ2ループで実行。Phase 2・3はスキップ（`--loops 0` で�
 ### プレイ資料だけを単独で作る（既存の設定資料から）
 
 ```
-/madamisu-publish 自作設定資料/
+/madamisu:publish 自作設定資料/
 ```
 
 madamisu の出力に依存せず、任意のディレクトリを入力として使える。

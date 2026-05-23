@@ -1,0 +1,388 @@
+---
+name: phase3
+description: 【内部用・自動起動禁止】親skillからの呼び出し専用。ユーザーが明示的に /madamisu:phase3 と入力した場合のみ単独起動可。それ以外では絶対に呼び出さない。マダミス生成のPhase 3（タイムスケジュール構築）を実行し、分単位の行動表を作成する。
+---
+
+以下の手順でマダミスの **Phase 3: タイムスケジュール構築** を実行してください。
+
+## 引数の解析
+
+`$ARGUMENTS` から以下を取得してください。
+- 第1引数: `SOURCE`（元資料のパス。フォルダまたはファイル）
+- `--base <path>` オプション: `BASE`（ベースとなるバージョンのフォルダパス。必須推奨）
+- `--loops N` オプション: `MAX_LOOPS`（最大ループ回数。省略時デフォルト: 3）
+
+## 元資料とベースバージョンの読み込み
+
+Readツールで以下を読み込んでください:
+- `SOURCE` がフォルダの場合: フォルダ内の全 `.md` ファイル
+- `SOURCE` がファイルの場合: そのファイル
+
+`BASE` が指定されている場合: `BASE` フォルダの全ファイルをReadツールで読み込み `BASE_CONTENT` として記憶してください。
+`BASE` が指定されていない場合: `output/` フォルダ内の最新 `v{N}` を探して `BASE` とし、そのファイルを読み込んでください。
+
+## 制作方針と品質閾値の読み込み
+
+`output/_config.md` が存在する場合は Readツールで読み込み、以下を記憶してください:
+- `CONFIG_CONTENT`: ファイル全体の内容（「品質閾値」セクション除く制作方針部分）
+- `THRESHOLD_GAME`: 品質閾値セクションの「ゲーム性スコア閾値」（デフォルト: 6）
+- `THRESHOLD_WORLD`: 「世界観スコア閾値」（デフォルト: 6）
+- `THRESHOLD_CONFIG`: 「制作方針スコア閾値」（デフォルト: 8）
+
+存在しない場合:
+- `CONFIG_CONTENT = ""`（空、以降の注入とレビュー追加を省略）
+- 閾値はデフォルト値を使用
+
+## バージョン番号の決定
+
+1. `output/` フォルダ内の既存 `v{N}` を確認し、次の番号 `NEXT_V` を決定する
+2. `BASE` の全ファイルを `output/v{NEXT_V}/` にコピーする
+3. `output/v{NEXT_V}/_working/` ディレクトリを作成する
+
+## ループ実行（最大{MAX_LOOPS}回）
+
+以下を最大{MAX_LOOPS}回繰り返す。**停止条件**: 🔴致命的矛盾 = 0件 OR {MAX_LOOPS}回完了。
+
+ループ変数:
+- `LOOP_NUM`: 現在のループ番号（1から開始）
+- `IS_FIRST`: LOOP_NUM == 1 かどうか
+- `PREV_V`: NEXT_V - 1（前のバージョン番号）
+- `FOCUS`: ループ1→「初回・タイムライン構築」、ループ2→「分単位のアリバイ整合性」、ループ3→「全キャラの行動と証拠の一致」
+
+---
+
+> **制作方針の注入**: `CONFIG_CONTENT` が空でない場合、以降の全エージェントのプロンプト冒頭に必ず以下を追加してください。`CONFIG_CONTENT` が空の場合はこの追加を省略してください。
+>
+> ```
+> 【制作方針】
+> {CONFIG_CONTENTの内容}
+> ※上記の方針を最優先にして出力すること。「固定要素・活かしたい要素」に記載された内容は絶対に変更しないこと。
+> ```
+
+---
+
+### ステップA: アイデア出し（2エージェントを並列起動）
+
+Agentツールで以下の2エージェントを**同時に**起動してください。
+
+**エージェント1: ゲーム性アイデア出し（タイムライン設計）**
+
+プロンプト（SOURCE_CONTENT・BASE_CONTENT を実際の内容で置換すること）:
+
+```
+あなたはマーダーミステリーのタイムライン設計専門家です。プレイヤーが推理できる公平なタイムラインを作ってください。
+
+【元資料】
+{SOURCE_CONTENTの全文}
+
+【確定済みプロット】
+{BASE_CONTENTのゲーム設定.md・キャラクター.md の内容}
+
+【タスク - IS_FIRST が true の場合】
+以下を設計してください:
+1. 事件当日の全体タイムライン（時刻ごとの出来事）
+2. 各キャラクターの行動記録（場所・行動・証人の有無）
+3. 重要な手がかりが発生する時刻と場所
+4. アリバイが成立するキャラクターとしないキャラクターの根拠
+
+【タスク - IS_FIRST が false の場合】
+前回出力の弱点（フォーカス: {FOCUS}）を補強する改善案を生成してください。
+- ループ2（分単位のアリバイ整合性）: 各キャラクターの移動時間を分単位で検証し、物理的に不可能な行動を修正してください
+- ループ3（全キャラの行動と証拠の一致）: タイムラインに記録された行動が、既存の証拠・手がかりと矛盾しないか検証し修正してください
+ゼロから作り直さず、前回出力をベースに弱点箇所のみ改善すること。
+
+【前回の出力（IS_FIRST が false の場合のみ）】
+{output/v{PREV_V}/タイムスケジュール.md の内容}（存在する場合のみ参照）
+
+【出力】
+Writeツールで output/v{NEXT_V}/_working/game-ideas.md に保存してください。
+```
+
+**エージェント2: 世界観アイデア出し（ドラマ性強化）**
+
+プロンプト（BASE_CONTENT を実際の内容で置換すること）:
+
+```
+あなたはマーダーミステリーの演出家です。タイムライン上でドラマ的な緊張感を生む配置を考えてください。
+
+【確定済みプロット】
+{BASE_CONTENTのゲーム設定.md・世界観.md・キャラクター.md の内容}
+
+【タスク - IS_FIRST が true の場合】
+タイムラインに以下のドラマ性を加えてください:
+- キャラクター同士の重要な邂逅・会話・衝突の時刻と場所
+- 各キャラクターが重要な決断をした瞬間
+- プレイヤーが「あの時こうだったのか」と気づく伏線の配置
+
+【タスク - IS_FIRST が false の場合】
+前回出力の弱点（フォーカス: {FOCUS}）を補強する改善案を生成してください。
+- ループ2: ドラマ的場面の時刻設定が現実的かどうかを検証し、アリバイと矛盾するシーンを修正してください
+- ループ3: 各キャラクターの行動動線がプロット上の秘密・目的と一致するか確認し修正してください
+ゼロから作り直さず、前回出力をベースに弱点箇所のみ改善すること。
+
+【前回の出力（IS_FIRST が false の場合のみ）】
+{output/v{PREV_V}/タイムスケジュール.md の内容}（存在する場合のみ参照）
+
+【出力】
+Writeツールで output/v{NEXT_V}/_working/world-ideas.md に保存してください。
+```
+
+---
+
+### ステップB: レビュー（3エージェントを並列起動）
+
+Agentツールで以下の3エージェントを**同時に**起動してください。
+`CONFIG_CONTENT` が空の場合は **制作方針レビュー（エージェント5）をスキップ** してください（2並列で実行）。
+
+**エージェント3: ゲーム性レビュー（タイムライン）**
+
+Agentツールで起動:
+- subagent_type: `madamisu:game-review`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【フェーズ固有指示】
+  あなたはマーダーミステリーのタイムラインレビュアーです。論理的整合性を厳密に検証してください。
+
+  【動的変数】
+  - NEXT_V: {NEXT_V}
+  - RUBRIC_PATH: ${CLAUDE_PLUGIN_ROOT}/rubrics/phase3-game.md
+  - CONFIG_CONTENT: {CONFIG_CONTENT}（空でない場合のみ）
+  - レビュー対象パス: output/v{NEXT_V}/_working/game-ideas.md
+
+  【出力先】
+  output/v{NEXT_V}/_working/game-review.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/game-review.md`
+
+**エージェント4: 世界観レビュー（ドラマ性）**
+
+Agentツールで起動:
+- subagent_type: `madamisu:world-review`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【フェーズ固有指示】
+  あなたはマーダーミステリーの演出レビュアーです。タイムライン上のドラマ性と没入感を評価してください。
+
+  【動的変数】
+  - NEXT_V: {NEXT_V}
+  - RUBRIC_PATH: ${CLAUDE_PLUGIN_ROOT}/rubrics/phase3-world.md
+  - CONFIG_CONTENT: {CONFIG_CONTENT}（空でない場合のみ）
+  - レビュー対象パス: output/v{NEXT_V}/_working/world-ideas.md
+
+  【出力先】
+  output/v{NEXT_V}/_working/world-review.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/world-review.md`
+
+**エージェント5: 制作方針レビュー（CONFIG_CONTENT が空でない場合のみ）**
+
+Agentツールで起動:
+- subagent_type: `madamisu:config-review`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【フェーズ固有指示】
+  あなたはマーダーミステリー制作方針レビュアーです。Phase 3で生成されたタイムラインが制作方針（_config.md）に忠実かを評価してください。
+
+  特に厳しく評価すべき項目:
+  - プレイ人数とタイムライン記述キャラ数の一致
+  - GM有無指定とタイムライン進行構造の整合
+  - 想定プレイ時間とタイムライン密度の一致
+  - Q12 固定要素のタイムライン上での反映
+
+  【動的変数】
+  - NEXT_V: {NEXT_V}
+  - RUBRIC_PATH: ${CLAUDE_PLUGIN_ROOT}/rubrics/phase3-config.md
+  - CONFIG_CONTENT: {CONFIG_CONTENTの実内容}
+  - レビュー対象パス:
+    - output/v{NEXT_V}/_working/game-ideas.md
+    - output/v{NEXT_V}/_working/world-ideas.md
+    - output/_config.md
+    - output/v{PREV_V}/ゲーム設定.md（存在する場合）
+    - output/v{PREV_V}/キャラクター.md（存在する場合）
+
+  【出力先】
+  output/v{NEXT_V}/_working/config-review.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/config-review.md`
+
+---
+
+### ステップC: 整合性チェック（タイムライン特化）
+
+Agentツールで以下のエージェントを起動してください。
+
+Agentツールで起動:
+- subagent_type: `madamisu:consistency`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【フェーズ固有指示】
+  あなたはマーダーミステリーのタイムライン整合性チェック専門家です。時系列の矛盾を全て発見してください。
+
+  【動的変数】
+  - NEXT_V: {NEXT_V}
+  - RUBRIC_PATH: ${CLAUDE_PLUGIN_ROOT}/rubrics/consistency-phase3.md
+  - PREV_V: {PREV_V}（前バージョンが存在する場合のみ）
+  - CONFIG_CONTENT: {CONFIG_CONTENT}（空でない場合のみ）
+  - レビュー対象パス:
+    - output/v{NEXT_V}/_working/game-ideas.md
+    - output/v{NEXT_V}/_working/world-ideas.md
+    - output/v{NEXT_V}/_working/game-review.md
+    - output/v{NEXT_V}/_working/world-review.md
+    - output/v{NEXT_V}/_working/config-review.md（存在する場合）
+    - output/_config.md（存在する場合）
+    - output/v{PREV_V}/ゲーム設定.md、output/v{PREV_V}/キャラクター.md（前バージョンが存在する場合）
+
+  【出力先】
+  output/v{NEXT_V}/_working/consistency.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/consistency.md`
+
+---
+
+### ステップD: 資料まとめ
+
+Agentツールで以下のエージェントを起動してください。
+
+Agentツールで起動:
+- subagent_type: `madamisu:synthesis`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【フェーズ固有指示】
+  あなたはマーダーミステリーの設定資料ライターです。タイムスケジュールファイルを作成してください。
+
+  game-review・world-review の採用推奨案を統合してタイムスケジュールを作成してください。
+  複数案統合時は最高総合スコア案を優先し、同点の場合はゲーム性・世界観のバランスを優先して判断してください。
+  consistency.mdの🔴矛盾は必ず解消すること。
+  変更箇所に HTML コメント <!-- Phase3 Loop{LOOP_NUM}修正: [修正内容の短い説明] --> を付けること。
+
+  output/v{NEXT_V}/タイムスケジュール.md の構成:
+
+  # タイムスケジュール
+
+  ## 事件当日の流れ
+
+  | 時刻 | 場所 | 出来事 | 関係者 |
+  |------|------|--------|--------|
+  | XX:XX | 〇〇 | （出来事の説明） | （キャラクター名） |
+
+  ## キャラクター別行動記録
+
+  ### [キャラクター名]
+  | 時刻 | 場所 | 行動 | 証人 |
+  |------|------|------|------|
+  | XX:XX | 〇〇 | （行動の説明） | （証人名または「なし」） |
+
+  ## 手がかり発生タイムライン
+
+  | 時刻 | 手がかりの種類 | 発見可能な状況 |
+  |------|---------------|---------------|
+  | XX:XX | （手がかりの説明） | （プレイヤーが発見できる状況） |
+
+  _meta.md のフェーズ番号は 3 とすること。
+  前バージョンのゲーム設定.md・キャラクター.md・世界観.md も output/v{NEXT_V}/ にコピーすること。
+
+  【動的変数】
+  - IS_FIRST: {IS_FIRST}
+  - NEXT_V: {NEXT_V}
+  - PREV_V: {PREV_V}（IS_FIRST=false 時のみ）
+  - LOOP_NUM: {LOOP_NUM}
+  - FOCUS: {FOCUS}（IS_FIRST=false 時のみ）
+  - CONFIG_CONTENT: {CONFIG_CONTENT}（空でない場合のみ）
+  - 読み込み対象パス:
+    - output/v{NEXT_V}/_working/ 以下の全ファイル
+    - output/v{PREV_V}/ゲーム設定.md、キャラクター.md（存在する場合）
+    - output/_config.md（存在する場合）
+
+  【出力先】
+  - output/v{NEXT_V}/タイムスケジュール.md
+  - output/v{NEXT_V}/_meta.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/synthesis.md`
+
+---
+
+### ステップE: 校正
+
+Agentツールで以下のエージェントを起動してください。
+
+Agentツールで起動:
+- subagent_type: `madamisu:proofread`
+- prompt（以下を埋めて渡す）:
+
+  ```
+  【動的変数】
+  - NEXT_V: {NEXT_V}
+  - 校正対象パス:
+    - output/v{NEXT_V}/タイムスケジュール.md
+
+  【出力先】
+  output/v{NEXT_V}/_working/proofread-log.md
+  ```
+
+agent 定義: `${CLAUDE_PLUGIN_ROOT}/agents/proofread.md`
+
+---
+
+### ステップF: ループ継続判定
+
+以下を確認してください:
+- `output/v{NEXT_V}/_working/consistency.md` の最終行から🔴件数を抽出
+- `output/v{NEXT_V}/_working/game-review.md` の総合スコア
+- `output/v{NEXT_V}/_working/world-review.md` の総合スコア
+- `output/v{NEXT_V}/_working/config-review.md` の総合スコア（存在する場合）
+
+判定ロジック:
+1. 🔴件数 > 0 → **ループ継続**
+2. 🔴件数 = 0 AND ゲーム性 >= {THRESHOLD_GAME} AND 世界観 >= {THRESHOLD_WORLD} AND（制作方針レビュー実施時のみ）制作方針 >= {THRESHOLD_CONFIG}
+   → **ループ停止**
+3. LOOP_NUM >= {MAX_LOOPS} → **ループ強制停止**
+4. それ以外 → **ループ継続**
+   - 補強観点（次の `FOCUS`）: 閾値未達のレビュー軸のうち、スコアが最も低い観点の「最低スコア項目」を採用
+
+ループ継続時: NEXT_V を +1、LOOP_NUM を +1 してステップA に戻る。
+
+## 完了メッセージ
+
+ループ終了後、以下を表示してユーザーに確認を求めてください。
+
+```
+========================================
+Phase 3 完了（output/v{NEXT_V}/）
+
+整合性スコア: 🔴N件 / 🟡N件 / 🔵N件
+ゲーム性: N/10 | 世界観: N/10 | 制作方針: N/10（未実施なら「未評価」）
+実行ループ数: {LOOP_NUM}回
+閾値（参考）: ゲーム性>={THRESHOLD_GAME}, 世界観>={THRESHOLD_WORLD}, 制作方針>={THRESHOLD_CONFIG}
+
+全フェーズ完了。output/v{NEXT_V}/ に以下が生成されています:
+- ゲーム設定.md
+- 世界観.md
+- キャラクター.md
+- タイムスケジュール.md
+
+確認後の処理を選択してください [y/n/f]
+  y: 完了（マスタースキル経由なら次の自動削除処理へ）
+  n: 中断（最終ファイル生成済みなのでファイルはそのまま残る）
+  f: フィードバックを反映する
+========================================
+```
+
+ユーザー入力後の分岐:
+- 「y」: 通常通り完了（マスタースキル経由の場合は次の自動削除処理に進む、単体実行時はそのまま終了）
+- 「n」: 「処理を中断しました。生成済みファイルは output/v{NEXT_V}/ に残っています。」と表示して終了
+- 「f」:
+  1. 「フィードバック内容を入力してください:」と表示してユーザー入力を受け付ける
+  2. ユーザー入力を `FEEDBACK_INPUT` として記憶する
+  3. Skillツールで `madamisu:feedback` skillを起動。引数として `--v {NEXT_V} "{FEEDBACK_INPUT}"` を渡して実行する
+  4. フィードバック適用完了後、適用先 v 番号で `NEXT_V` を更新する
+  5. この完了確認プロンプト（[y/n/f]）に戻る

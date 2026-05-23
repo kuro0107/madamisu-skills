@@ -1,0 +1,12 @@
+{
+  "name": "madamisu-skills",
+  "owner": { "name": "kuro0107" },
+  "plugins": [
+    {
+      "name": "madamisu",
+      "source": "./plugins/madamisu",
+      "description": "マダミス自動生成スキルセット",
+      "version": "0.1.0"
+    }
+  ]
+}
