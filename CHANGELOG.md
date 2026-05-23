@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.1.1] - 2026-05-24
+
+### Added
+- `docs/versioning.md`: バージョニング規約ドキュメント
+- `CHANGELOG.md`: 変更履歴の導入
+- `examples/sample-input/mountain-villa/`: サンプル入力（山荘クローズドサークル）
+
 ## [0.1.0] - 2026-05-22
 
 ### Added

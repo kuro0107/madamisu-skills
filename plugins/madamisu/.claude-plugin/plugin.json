@@ -1,6 +1,6 @@
 {
   "name": "madamisu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "コンセプト・設定資料からマーダーミステリーの設定・プレイ資料を自動生成・ブラッシュアップする Claude Code スキルセット",
   "author": { "name": "kuro0107" },
   "license": "MIT",
