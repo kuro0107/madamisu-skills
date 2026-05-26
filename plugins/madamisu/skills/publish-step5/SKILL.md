@@ -1,9 +1,9 @@
 ---
 name: publish-step5
-description: 【内部用・自動起動禁止】親skillからの呼び出し専用。ユーザーが明示的に /madamisu:publish-step5 と入力した場合のみ単独起動可。それ以外では絶対に呼び出さない。madamisu:publishの工程5（四段階レビュー）を実行する。
+description: 【内部用・自動起動禁止】親skillからの呼び出し専用。ユーザーが明示的に /madamisu:publish-step5 と入力した場合のみ単独起動可。それ以外では絶対に呼び出さない。madamisu:publishの工程5（五段階レビュー）を実行する。
 ---
 
-以下の手順でmadamisu-publishの工程5（四段階レビュー）を実行してください。
+以下の手順でmadamisu-publishの工程5（五段階レビュー）を実行してください。
 
 ## 引数の解析
 
@@ -171,6 +171,38 @@ publish/v{PUBLISH_V}/_working/05d_proofread.md に保存。
 ルーブリック出力フォーマットに従う。
 ```
 
+## 5E: フェーズ構成レビュー
+
+Agent で以下を起動:
+
+```
+あなたはマーダーミステリーのフェーズ構成レビュー担当です。
+
+【入力】
+Read で以下を読む:
+- publish/v{PUBLISH_V}/02_game_design.md
+- ${CLAUDE_PLUGIN_ROOT}/rubrics/publish-phase-design.md
+
+【タスク】
+02_game_design.md のフェーズ設計を publish-phase-design.md の基準で評価する。
+
+評価軸:
+1. 時間制約: 各フェーズが制約内（絶対上限35分）に収まっているか
+2. インタラクティビティ: 全フェーズで双方向インタラクションが発生するか
+3. 逸脱の根拠: 標準テンプレートからの逸脱に理由が明記されているか
+
+判定マーク:
+- 🔴 致命的: 時間超過（35分/フェーズ超）、インタラクティビティなし
+- 🟡 警告: 逸脱に理由なし、または推奨範囲超（25〜35分）かつ理由なし
+- 🔵 記録: 理由あり逸脱（型破り構成含む）、または推奨範囲超（25〜35分）かつ理由あり
+
+型破り構成は3軸（時間・インタラクティビティ・根拠充実度）を満たせばOK判定。
+
+【出力】
+Write で publish/v{PUBLISH_V}/_working/05e_phase_design.md に保存。
+```
+```
+
 ## 統合レポート生成
 
 Agent で以下を起動:
@@ -180,7 +212,7 @@ Agent で以下を起動:
 Read で publish/v{PUBLISH_V}/_working/05* の全ファイルを読む。
 
 【タスク】
-4段階のレビュー結果を統合し、publish/v{PUBLISH_V}/05_review_report.md を生成。
+5段階のレビュー結果を統合し、publish/v{PUBLISH_V}/05_review_report.md を生成。
 
 【フォーマット】
 # 工程5 レビュー結果
@@ -193,6 +225,7 @@ Read で publish/v{PUBLISH_V}/_working/05* の全ファイルを読む。
 - 暴走耐性: 完全破綻N件 / 一部破綻M件
 - 消極的耐性: 完全詰みN件 / 一部目標不能M件
 - 校正問題: N件
+- フェーズ構成問題: N件（🔴 X件 / 🟡 Y件 / 🔵 Z件）
 
 ## プレイアビリティ問題
 ### キャラA視点
@@ -217,6 +250,9 @@ Read で publish/v{PUBLISH_V}/_working/05* の全ファイルを読む。
 
 ## 校正問題
 ...
+
+## フェーズ構成問題
+...
 ```
 
 ## 完了表示
@@ -231,4 +267,4 @@ Read で publish/v{PUBLISH_V}/_working/05* の全ファイルを読む。
 
 ## 完了条件
 
-4段階レビュー完了、統合レポート出力済。
+5段階レビュー完了、統合レポート出力済。

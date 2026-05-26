@@ -31,7 +31,7 @@ description: 【内部用・自動起動禁止】親skillからの呼び出し�
 ## 対象バージョンの確定
 
 `TARGET_V` が指定されていない場合:
-- Bash ツールで `ls -d output/v*/ 2>/dev/null | sort -V | tail -1` を実行して最新vを取得
+- Bash ツールで `ls -d output/v*/ 2>/dev/null | sort -t'v' -k2 -n | tail -1` を実行して最新vを取得
 - v番号を抽出して `TARGET_V` とする
 - `output/v*` が存在しない場合は以下を表示して終了:
   ```

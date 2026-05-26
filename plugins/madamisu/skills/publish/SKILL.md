@@ -11,7 +11,7 @@ description: 生成済みマダミスシナリオ（output/v{N}/ または独自
 - 第1引数（省略可）: `INPUT_DIR`（入力ディレクトリのパス）
 
 `INPUT_DIR` が省略された場合:
-- Bash で `ls -d output/v*/ 2>/dev/null | sort -V | tail -1` を実行
+- Bash で `ls -d output/v*/ 2>/dev/null | sort -t'v' -k2 -n | tail -1` を実行
 - 該当が見つかれば `INPUT_DIR = <最新v>`
 - 見つからない場合は以下を表示して終了:
   ```
@@ -24,8 +24,13 @@ description: 生成済みマダミスシナリオ（output/v{N}/ または独自
 
 ## バージョン番号の決定
 
-1. `publish/` フォルダ内の既存 `v{N}` フォルダを確認し、次の番号 `NEXT_V` を決定する
-2. `publish/v{NEXT_V}/_working/` ディレクトリを Bash で作成する
+Bash で以下を実行し `NEXT_V` を決定して作業ディレクトリを作成する:
+
+```bash
+LATEST=$(ls -d publish/v*/ 2>/dev/null | sort -t'v' -k2 -n | tail -1 | grep -oE '[0-9]+')
+NEXT_V=$(( ${LATEST:-0} + 1 ))
+mkdir -p "publish/v${NEXT_V}/_working"
+```
 
 ## 工程0: 前提資料の存在確認
 

@@ -187,7 +187,10 @@ Skillツールで `madamisu:phase1` skillを起動してください。
 - skill本文の `$ARGUMENTS` 解析で `SOURCE` と `MAX_LOOPS` が取得されます。
 
 Phase 1 完了後のユーザー確認で:
-- 「y」が入力された場合: `output/` フォルダ内の最新 `v{N}` フォルダのパスを `PHASE1_RESULT` として記録し、Phase 2 へ進む
+- 「y」が入力された場合: Bash で以下を実行して `PHASE1_RESULT` を取得し、Phase 2 へ進む
+  ```bash
+  PHASE1_RESULT=$(ls -d output/v*/ 2>/dev/null | sort -t'v' -k2 -n | tail -1)
+  ```
 - 「n」が入力された場合: 以下を表示して終了する
 
 ```
@@ -209,7 +212,10 @@ Skillツールで `madamisu:phase2` skillを起動してください。
 - `args` に渡す文字列: `"{SOURCE} --base {PHASE1_RESULT} --loops {P2_LOOPS}"`
 
 Phase 2 完了後のユーザー確認で:
-- 「y」が入力された場合: `output/` フォルダ内の最新 `v{N}` フォルダのパスを `PHASE2_RESULT` として記録し、Phase 3 へ進む
+- 「y」が入力された場合: Bash で以下を実行して `PHASE2_RESULT` を取得し、Phase 3 へ進む
+  ```bash
+  PHASE2_RESULT=$(ls -d output/v*/ 2>/dev/null | sort -t'v' -k2 -n | tail -1)
+  ```
 - 「n」が入力された場合: 以下を表示して終了する
 
 ```
